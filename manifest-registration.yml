@@ -3,9 +3,12 @@ applications:
   path: ./applications/registration-server/build/libs/registration-server.jar
   routes:
   - route: registration-pal-sudesh.apps.dev.pcf-aws.com
-  memory: 1G
+  memory: 500M
+  disk_quota: 500M
   instances: 1
   env:
+    REGISTRATION_SERVER_ENDPOINT: http://registration-pal-sudesh.apps.dev.pcf-aws.com
     JBP_CONFIG_OPEN_JDK_JRE: '{ jre: { version: 11.+ } }'
+    JAVA_OPTS: '-XX:MaxMetaspaceSize=80780K -Xss512k -Xmx200M -XX:ReservedCodeCacheSize=16M -XX:MaxDirectMemorySize=16M'
   services:
   - tracker-registration-database
