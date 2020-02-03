@@ -73,7 +73,7 @@ public class FlowTest {
         timesheetsServer.stop();
     }
 
-    @Test
+   /* @Test
     public void testBasicFlow() throws Exception {
         Response response;
 
@@ -155,5 +155,88 @@ public class FlowTest {
 
         response = httpClient.get(timesheetsServerUrl("/time-entries?userId=" + createdUserId));
         assertThat(findResponseId(response)).isEqualTo(createdTimeEntryId);
-    }
+    }*/
+   @Test
+   public void testBasicFlow() throws Exception {
+       Response response;
+
+       response = httpClient.get(registrationServerUrl("/"));
+       assertThat(response.body).isEqualTo("Noop!");
+
+       response = httpClient.post(registrationServerUrl("/registration"), jsonMapBuilder()
+               .put("name", "aUser")
+               .build()
+       );
+       long createdUserId = findResponseId(response);
+       assertThat(createdUserId).isGreaterThan(0);
+
+       response = httpClient.get(registrationServerUrl("/users/" + createdUserId));
+       assertThat(response.body).isNotNull().isNotEmpty();
+
+       response = httpClient.get(registrationServerUrl("/accounts?ownerId=" + createdUserId));
+       long createdAccountId = findResponseId(response);
+       assertThat(createdAccountId).isGreaterThan(0);
+
+       response = httpClient.post(registrationServerUrl("/projects"), jsonMapBuilder()
+               .put("accountId", createdAccountId)
+               .put("name", "aProject")
+               .build()
+       );
+       long createdProjectId = findResponseId(response);
+       assertThat(createdProjectId).isGreaterThan(0);
+
+       response = httpClient.get(registrationServerUrl("/projects?accountId=" + createdAccountId));
+       assertThat(findResponseId(response)).isEqualTo(createdProjectId);
+
+
+       response = httpClient.get(allocationsServerUrl("/"));
+       assertThat(response.body).isEqualTo("Noop!");
+
+       response = httpClient.post(
+               allocationsServerUrl("/allocations"), jsonMapBuilder()
+                       .put("projectId", createdProjectId)
+                       .put("userId", createdUserId)
+                       .put("firstDay", "2015-05-17")
+                       .put("lastDay", "2015-05-26")
+                       .build()
+       );
+
+       long createdAllocationId = findResponseId(response);
+       assertThat(createdAllocationId).isGreaterThan(0);
+
+       response = httpClient.get(allocationsServerUrl("/allocations?projectId=" + createdProjectId));
+       assertThat(findResponseId(response)).isEqualTo(createdAllocationId);
+
+
+       response = httpClient.get(backlogServerUrl("/"));
+       assertThat(response.body).isEqualTo("Noop!");
+
+       response = httpClient.post(backlogServerUrl("/stories"), jsonMapBuilder()
+               .put("projectId", createdProjectId)
+               .put("name", "A story")
+               .build()
+       );
+       long createdStoryId = findResponseId(response);
+       assertThat(createdStoryId).isGreaterThan(0);
+
+       response = httpClient.get(backlogServerUrl("/stories?projectId=" + createdProjectId));
+       assertThat(findResponseId(response)).isEqualTo(createdStoryId);
+
+
+       response = httpClient.get(timesheetsServerUrl("/"));
+       assertThat(response.body).isEqualTo("Noop!");
+
+       response = httpClient.post(timesheetsServerUrl("/time-entries"), jsonMapBuilder()
+               .put("projectId", createdProjectId)
+               .put("userId", createdUserId)
+               .put("date", "2015-12-17")
+               .put("hours", 8)
+               .build()
+       );
+       long createdTimeEntryId = findResponseId(response);
+       assertThat(createdTimeEntryId).isGreaterThan(0);
+
+       response = httpClient.get(timesheetsServerUrl("/time-entries?userId=" + createdUserId));
+       assertThat(findResponseId(response)).isEqualTo(createdTimeEntryId);
+   }
 }
